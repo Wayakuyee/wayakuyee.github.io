@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sides Tracker</title>
+    <meta name="color-scheme" content="light dark">
+</head>
+<body>
+<div class="container">
+    <h1>Sides Tracker</h1>
+    <p>Track how many sides each person owes to others in the group.</p>
+    
+    <div class="table-container">
+        <table id="sidesMatrix">
+            <thead>
+                <tr>
+                    <th>Owes To →</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Table rows will be added dynamically -->
+            </tbody>
+        </table>
+    </div>
+    <div id="selectionInfo" class="selection-info"></div>
+</div>
+
+<style>
+:root {
+    /* Light theme (default) */
+    --bg-color: #ffffff;
+    --text-color: #333333;
+    --border-color: #dddddd;
+    --header-bg: #f5f5f5;
+    --row-hover: #f9f9f9;
+    --cell-hover: #e6f7ff;
+    --selection-color: #fff3cd;
+    --total-bg: #e6f3ff;
+    --zero-color: #999999;
+    --info-bg: #f8f9fa;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-color: #1a1a1a;
+        --text-color: #e0e0e0;
+        --border-color: #333333;
+        --header-bg: #2d2d2d;
+        --row-hover: #2d2d2d;
+        --cell-hover: #1a3a4a;
+        --selection-color: #4a3a1a;
+        --total-bg: #1a2a3a;
+        --zero-color: #666666;
+        --info-bg: #2d2d2d;
+    }
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+}
+
+h1 {
+    color: var(--text-color);
+    text-align: center;
+}
+
+.table-container {
+    margin: 20px 0;
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    table-layout: fixed;
+}
+
+th, td {
+    padding: 12px;
+    text-align: center;
+    border: 1px solid var(--border-color);
+    min-width: 80px;
+}
+
+th {
+    background-color: var(--header-bg);
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+th:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background-color: var(--header-bg);
+}
+
+td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background-color: var(--row-hover);
+    font-weight: bold;
+}
+
+/* Only apply hover styles when there's no selection */
+tr:not(.selected-row):hover td:not(:first-child):not(.selected-column):not(.selected-cell) {
+    background-color: var(--row-hover);
+}
+
+td:not(.selected-row):not(.selected-column):not(.selected-cell):hover {
+    background-color: var(--cell-hover);
+}
+
+.zero {
+    color: var(--zero-color);
+}
+
+/* Diagonal cells */
+td[rowspan] {
+    background-color: var(--header-bg);
+    color: var(--zero-color);
+}
+
+.total-cell {
+    background-color: var(--total-bg);
+    font-weight: bold;
+}
+
+.total-row td {
+    background-color: var(--total-bg);
+    font-weight: bold;
+}
+
+.total-row td:first-child {
+    background-color: var(--total-bg);
+}
+
+/* Selection styles */
+.selected-row td:not(.total-cell) {
+    background-color: var(--selection-color);
+}
+
+.selected-column {
+    background-color: var(--selection-color);
+}
+
+.selected-cell {
+    background-color: var(--selection-color);
+}
+
+/* Ensure sticky cells maintain their background when selected */
+td:first-child.selected-row {
+    background-color: var(--selection-color);
+}
+
+th.selected-column {
+    background-color: var(--selection-color);
+}
+
+.selection-info {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: var(--info-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 16px;
+    line-height: 1.5;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Sample data - replace this with your actual data
+    const sidesData = {
+        "Jack": {
+            "Jim": 0,
+            "Reuben": 1,
+            "Ted": 1,
+            "Wendy": 0,
+            "Daison": 0
+        },
+        "Jim": {
+            "Jack": 0,
+            "Reuben": 0,
+            "Ted": 0,
+            "Wendy": 0,
+            "Daison": 0
+        },
+        "Reuben": {
+            "Jack": 0,
+            "Jim": 0,
+            "Ted": 1,
+            "Wendy": 0,
+            "Daison": 1
+        },
+        "Ted": {
+            "Jack": 0,
+            "Jim": 2,
+            "Reuben": 2,
+            "Wendy": 1,
+            "Daison": 0
+        },
+        "Wendy": {
+            "Jack": 0,
+            "Jim": 0,
+            "Reuben": 0,
+            "Ted": 0,
+            "Daison": 0
+        },
+        "Daison": {
+            "Jack": 0,
+            "Jim": 0,
+            "Reuben": 0,
+            "Ted": 0,
+            "Wendy": 0
+        }
+    };
+
+    const table = document.getElementById('sidesMatrix');
+    const thead = table.getElementsByTagName('thead')[0];
+    const tbody = table.getElementsByTagName('tbody')[0];
+
+    // Get all unique names
+    const names = Object.keys(sidesData);
+
+    // Calculate column totals (sides received)
+    const columnTotals = {};
+    names.forEach(receiver => {
+        columnTotals[receiver] = names.reduce((total, giver) => {
+            return total + (sidesData[giver][receiver] || 0);
+        }, 0);
+    });
+
+    // Clear existing header content
+    thead.innerHTML = '';
+
+    const selectionInfo = document.getElementById('selectionInfo');
+
+    function updateSelectionInfo(row, columnIndex, isCell) {
+        if (!row && !columnIndex) {
+            selectionInfo.innerHTML = '';
+            return;
+        }
+
+        let info = '';
+        let specialNote = '';
+        if (isCell) {
+            const rowName = row.cells[0].textContent;
+            const colName = thead.rows[0].cells[columnIndex].textContent;
+            const value = row.cells[columnIndex].textContent;
+            info = `${rowName} owes ${colName} ${value} side${value !== '1' ? 's' : ''}.`;
+            
+            // Add special note for Ted-Reuben intersection
+            if (rowName === 'Ted' && colName === 'Reuben') {
+                specialNote = '<br><br>Special note: 1 small fries';
+            }
+        } else if (row) {
+            const rowName = row.cells[0].textContent;
+            if (row.classList.contains('total-row')) {
+                // Total Receiving row
+                const totals = [];
+                let totalSides = 0;
+                names.forEach((name, index) => {
+                    const value = row.cells[index + 1].textContent;
+                    if (value !== '0') {
+                        totals.push(`${name} (${value} side${value !== '1' ? 's' : ''})`);
+                        totalSides += parseInt(value);
+                    }
+                });
+                info = `Total sides receiving: ${totalSides}<br>${rowName} is owed by: ${totals.join(', ')}`;
+            } else {
+                // Regular row
+                const rowTotal = row.cells[names.length + 1].textContent;
+                const debts = [];
+                names.forEach((name, index) => {
+                    const value = row.cells[index + 1].textContent;
+                    if (value !== '0' && value !== '-') {
+                        debts.push(`${name} (${value} side${value !== '1' ? 's' : ''})`);
+                    }
+                });
+                info = `Total sides owed: ${rowTotal}<br>${rowName} owes: ${debts.join(', ')}`;
+            }
+        } else if (columnIndex) {
+            const colName = thead.rows[0].cells[columnIndex].textContent;
+            if (colName === 'Total Owed') {
+                // Total Owed column
+                const totals = [];
+                let totalSides = 0;
+                Array.from(tbody.rows).slice(0, -1).forEach(row => {
+                    const value = row.cells[columnIndex].textContent;
+                    if (value !== '0') {
+                        totals.push(`${row.cells[0].textContent} (${value} side${value !== '1' ? 's' : ''})`);
+                        totalSides += parseInt(value);
+                    }
+                });
+                info = `Total sides owed: ${totalSides}<br>${colName} by: ${totals.join(', ')}`;
+            } else {
+                // Regular column
+                const debts = [];
+                Array.from(tbody.rows).slice(0, -1).forEach(row => {
+                    const value = row.cells[columnIndex].textContent;
+                    if (value !== '0' && value !== '-') {
+                        debts.push(`${row.cells[0].textContent} (${value} side${value !== '1' ? 's' : ''})`);
+                    }
+                });
+                const total = tbody.rows[tbody.rows.length - 1].cells[columnIndex].textContent;
+                info = `Total sides receiving: ${total}<br>${colName} is owed by: ${debts.join(', ')}`;
+            }
+        }
+        selectionInfo.innerHTML = info + specialNote;
+    }
+
+    function clearSelections() {
+        document.querySelectorAll('.selected-row').forEach(el => el.classList.remove('selected-row'));
+        document.querySelectorAll('.selected-column').forEach(el => el.classList.remove('selected-column'));
+        document.querySelectorAll('.selected-cell').forEach(el => el.classList.remove('selected-cell'));
+        updateSelectionInfo(null, null);
+    }
+
+    function selectRow(row) {
+        clearSelections();
+        row.classList.add('selected-row');
+        updateSelectionInfo(row, null, false);
+    }
+
+    function selectColumn(columnIndex) {
+        clearSelections();
+        // Select header
+        thead.rows[0].cells[columnIndex].classList.add('selected-column');
+        // Select cells in the column
+        Array.from(tbody.rows).forEach(row => {
+            if (row.cells[columnIndex]) {
+                row.cells[columnIndex].classList.add('selected-column');
+            }
+        });
+        updateSelectionInfo(null, columnIndex, false);
+    }
+
+    function selectCell(row, columnIndex) {
+        clearSelections();
+        // Select the row first
+        row.classList.add('selected-row');
+        // Select the column
+        thead.rows[0].cells[columnIndex].classList.add('selected-column');
+        Array.from(tbody.rows).forEach(r => {
+            if (r.cells[columnIndex]) {
+                r.cells[columnIndex].classList.add('selected-column');
+            }
+        });
+        // Select the cell last
+        row.cells[columnIndex].classList.add('selected-cell');
+        updateSelectionInfo(row, columnIndex, true);
+    }
+
+    // Create header row
+    const headerRow = thead.insertRow();
+    const cornerCell = headerRow.insertCell();
+    cornerCell.textContent = "Owes To →";
+    names.forEach((name, index) => {
+        const cell = headerRow.insertCell();
+        cell.textContent = name;
+        cell.addEventListener('click', () => selectColumn(index + 1));
+    });
+    // Add "Total Owed" header
+    const totalHeader = headerRow.insertCell();
+    totalHeader.textContent = "Total Owed";
+    totalHeader.classList.add('total-cell');
+    totalHeader.addEventListener('click', () => selectColumn(names.length + 1));
+
+    // Create data rows
+    names.forEach((rowName, rowIndex) => {
+        const row = tbody.insertRow();
+        const nameCell = row.insertCell();
+        nameCell.textContent = rowName;
+        nameCell.addEventListener('click', () => selectRow(row));
+        
+        let rowTotal = 0;
+        names.forEach((colName, colIndex) => {
+            const cell = row.insertCell();
+            if (rowName === colName) {
+                cell.textContent = "-";
+                cell.setAttribute('rowspan', '1');
+            } else {
+                const value = sidesData[rowName][colName] || 0;
+                cell.textContent = value;
+                if (value === 0) {
+                    cell.classList.add('zero');
+                }
+                rowTotal += value;
+            }
+            cell.addEventListener('click', () => selectCell(row, colIndex + 1));
+        });
+        
+        // Add row total
+        const totalCell = row.insertCell();
+        totalCell.textContent = rowTotal;
+        totalCell.classList.add('total-cell');
+        totalCell.addEventListener('click', () => selectRow(row));
+    });
+
+    // Add totals row
+    const totalsRow = tbody.insertRow();
+    totalsRow.classList.add('total-row');
+    const totalsLabel = totalsRow.insertCell();
+    totalsLabel.textContent = "Total Receiving";
+    totalsLabel.addEventListener('click', () => selectRow(totalsRow));
+    
+    names.forEach((name, index) => {
+        const totalCell = totalsRow.insertCell();
+        totalCell.textContent = columnTotals[name];
+        totalCell.addEventListener('click', () => selectColumn(index + 1));
+    });
+
+    // Add empty cell for the row total column in the totals row
+    const emptyTotal = totalsRow.insertCell();
+    emptyTotal.textContent = "-";
+    emptyTotal.classList.add('total-cell');
+    emptyTotal.addEventListener('click', () => selectColumn(names.length + 1));
+});
+</script>
+</body>
+</html>
