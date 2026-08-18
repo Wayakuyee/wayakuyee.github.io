@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wayakuyee | Home</title>
+    <meta
+      name="description"
+      content="Personal homepage for Wayakuyee with social links and a short bio."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="page-shell">
+      <section class="profile-card" aria-label="Profile">
+        <img
+          class="avatar"
+          src="https://github.com/wayakuyee.png"
+          alt="Wayakuyee profile picture"
+        />
+
+        <h1>Wayakuyee</h1>
+
+        <p class="bio">
+          Welcome! My name is Ted (a.k.a. Tedyee, Wayakuyee). I’m a software
+          developer that always thinks about trying new things and sometimes
+          does try them. My personal goals and achievements can be found below,
+          as well as my socials. Feel free to message me on Discord!
+        </p>
+
+        <div class="socials" aria-label="Social media links">
+          <a class="social-btn github" href="https://github.com/Wayakuyee" target="_blank" rel="noreferrer" aria-label="GitHub">
+            <i class="fa-brands fa-github"></i>
+            <span>GitHub</span>
+          </a>
+          <a class="social-btn youtube" href="https://www.youtube.com/@GundownShowdown" target="_blank" rel="noreferrer" aria-label="YouTube">
+            <i class="fa-brands fa-youtube"></i>
+            <span>YouTube</span>
+          </a>
+          <a class="social-btn twitch" href="https://www.twitch.tv/wayakuyee" target="_blank" rel="noreferrer" aria-label="Twitch">
+            <i class="fa-brands fa-twitch"></i>
+            <span>Twitch</span>
+          </a>
+          <a class="social-btn discord" href="https://discord.com/users/tedyee" target="_blank" rel="noreferrer" aria-label="Discord">
+            <i class="fa-brands fa-discord"></i>
+            <span>Discord</span>
+          </a>
+          <a class="social-btn leetcode" href="https://leetcode.com/u/Wayakuyee/" target="_blank" rel="noreferrer" aria-label="LeetCode">
+            <span class="brand-mark" aria-hidden="true">
+              <img src="https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/leetcode.svg" alt="LeetCode icon" />
+            </span>
+            <span>LeetCode</span>
+          </a>
+          <a class="social-btn osu" href="https://osu.ppy.sh/users/4002079" target="_blank" rel="noreferrer" aria-label="osu!">
+            <span class="brand-mark" aria-hidden="true">
+              <img src="https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/osu.svg" alt="osu! icon" />
+            </span>
+            <span>osu!</span>
+          </a>
+        </div>
+
+        <section class="goals-section" aria-labelledby="goals-heading">
+          <h2 id="goals-heading">Goals & Achievements</h2>
+          <div class="goals-grid">
+            <div class="years-column" id="yearsColumn" aria-label="Year list">
+              <button class="year-btn active" type="button" data-year="2026">2026</button>
+              <button class="year-btn" type="button" data-year="2025">2025</button>
+              <button class="year-btn" type="button" data-year="2024">2024</button>
+              <button class="year-btn" type="button" data-year="2023">2023</button>
+            </div>
+            <div class="details-column">
+              <ul id="yearDetails" class="year-details" aria-live="polite"></ul>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script>
+      const achievements = {
+        2023: [
+          'Graduated university',
+          'Started working full time as a software developer',
+          'Visited Japan',
+          'Completed a 24 hour gaming session'
+        ],
+        2024: [
+          'Participated in 2 game jams, creating <a href="https://rengames.itch.io/good" target="_blank" rel="noreferrer">Goo\'d</a> and <a href="https://marblesmelod.itch.io/potions-please" target="_blank" rel="noreferrer">Potions, Please</a>',
+          'Promoted to project manager at work',
+          'Visited Portugal and Spain'
+        ],
+        2025: [
+          'Switched to Linux (Mint), but still dual boot Windows',
+          'Lost imposter syndrome at work',
+          'Visited New Zealand'
+        ],
+        2026: [
+          'Cruised Eastern Canada and New England',
+          'Complete a marathon',
+          'Do a muscle up',
+          'All Kill a LeetCode weekly contest',
+          'Visit Vietnam and Thailand'
+        ]
+      };
+
+      const yearButtons = document.querySelectorAll('.year-btn');
+      const yearDetails = document.getElementById('yearDetails');
+
+      function renderYear(year) {
+        const items = achievements[year] || [];
+        yearDetails.innerHTML = items
+          .map((item) => `<li>${item}</li>`)
+          .join('');
+
+        yearButtons.forEach((button) => {
+          button.classList.toggle('active', button.dataset.year === String(year));
+        });
+      }
+
+      yearButtons.forEach((button) => {
+        button.addEventListener('click', () => renderYear(button.dataset.year));
+      });
+
+      renderYear(2026);
+    </script>
+  </body>
+</html>
